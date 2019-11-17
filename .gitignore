@@ -8,3 +8,6 @@ jspm_packages/
 
 # npm cache directory
 .npm
+
+# credentials
+*arduino_secrets.h
