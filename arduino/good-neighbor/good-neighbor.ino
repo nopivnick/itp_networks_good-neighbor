@@ -1,19 +1,9 @@
 /*
-  Dweet.io GET client for ArduinoHttpClient library
-  Connects to dweet.io once every ten seconds,
-  sends a GET request and a request body. Uses SSL
+  Attributions:
 
-  Shows how to use Strings to assemble path and parse content
-  from response. dweet.io expects:
-  https://dweet.io/get/latest/dweet/for/thingName
+  - Tom Igoe's HttpClientGetJson.ino example code:
+    https://github.com/tigoe/Wifi101_examples/tree/master/HttpClientGetJSON
 
-  For more on dweet.io, see https://dweet.io/play/
-
-  created 15 Feb 2016
-  updated 22 Jan 2019
-  by Tom Igoe
-
-  this example is in the public domain
 */
 #include <ArduinoHttpClient.h>
 #include <WiFiNINA.h>
@@ -25,7 +15,9 @@
 char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
 
-const char serverAddress[] = "192.168.0.100";  // server address
+//const char serverAddress[] = "itp-good-neighbor.glitch.me";  // server address @ glitch
+//const char serverAddress[] = "10.23.11.246";                 // server address @ nyu (localhost)
+const char serverAddress[] = "192.168.1.244";                // server address @ home (localhost)
 int port = 8080;
 
 WiFiClient wifi;
@@ -55,7 +47,7 @@ void setup() {
 
 void loop() {
   // assemble the path for the GET message:
-  String path = "/temperature/";
+  String path = "/decibels";
 
   // send the GET request
   Serial.println("making GET request");
@@ -71,12 +63,18 @@ void loop() {
 
   // parse the string into a JSONVar object:
   JSONVar myObject = JSON.parse(response);
- 
+
   // if you know the object's keys, you can ask for their values:
-  Serial.print("temperature:\t");
-  Serial.println(myObject["temperature"]);
-  Serial.print("humidity:\t");
-  Serial.println(myObject["humidity"]);
+  Serial.print("decibels:\t");
+  Serial.println(myObject["decibels"]);
+  Serial.print("patience:\t");
+  Serial.println(myObject["patience"]);
+  Serial.print("volume:\t\t");
+  Serial.println(myObject["volume"]);
+  Serial.print("track:\t\t");
+  Serial.println(myObject["track"]);
+  Serial.print("datetime:\t");
+  Serial.println(myObject["datetime"]);
 
   // myObject.keys() can be used to get an array
   // of all the keys in the object
