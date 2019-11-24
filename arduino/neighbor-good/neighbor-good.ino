@@ -47,7 +47,7 @@ void setup() {
 
 void loop() {
   // assemble the path for the GET message:
-  String path = "/decibels/";
+  String path = "/decibels";
 
   // send the GET request
   Serial.println("making GET request");
