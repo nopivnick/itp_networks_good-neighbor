@@ -1,12 +1,19 @@
 /*
+   Attributions:
+
+   - Tom Igoe's RestTest example code:
+     https://github.com/tigoe/NodeExamples/tree/master/RestTest
+
    REST Test
    A minimal server to test a RESTful API.
 
    The RESTful API in this case is for a networked device that handles noise complaints without involving the police.
 
    The endpoints are:
+   /data         - all data as json object
+   /playState    - playing, paused
    /decibels     - noise in decibels, a float
-   /patience     - 3 (high), 2 (medium), 1 (low), 0 (done)
+   /warning      - 3 (high), 2 (medium), 1 (low), 0 (done)
    /volume       - volume level on the device, a float // float may depend on implementation
    /track        - a specific track from a playlist
    /datetime     - the current date and time
@@ -25,8 +32,10 @@ let now = new Date();
 
 // make a data object representing all your parameters:
 let killswitch = {
+  data: 0, // all data as json object
+  playState: 0, // playing, paused
   decibels: 0, // noise in decibels, a float
-  patience: 3, // 3 (high), 2 (medium), 1 (low), 0 (done)
+  warning: 3, // 3 (high), 2 (medium), 1 (low), 0 (done)
   volume: 0, // volume level on the device, a float // may depend on implementation
   track: 0, // a specific track from a playlist
   datetime: now // the current date and time
@@ -47,11 +56,17 @@ function handleGetRequest(request, response) {
   let result = '';
   // find out the REST API path, and get the appropriate property:
   switch (request.path) {
+    case '/data':
+      result = killswitch.data;
+      break;
+    case '/playState':
+      result = killswitch.playState;
+      break;
     case '/decibels':
       result = killswitch.decibels;
       break;
-    case '/patience':
-      result = killswitch.patience;
+    case '/warning':
+      result = killswitch.warning;
       break;
     case '/volume':
       result = killswitch.volume;
@@ -63,7 +78,8 @@ function handleGetRequest(request, response) {
       result = killswitch.datetime;
       break;
   }
-  response.end(result.toString());
+  response.json(killswitch);
+  // response.end(result.toString());
 }
 
 // this handles all POST requests. You may want to make
@@ -111,10 +127,14 @@ function printRequestInfo(request) {
 // here are all your endpoints. The pattern is:
 // GET the  current value, or
 // POST the new value as a request param:
+server.get('/data', handleGetRequest);
+server.post('/data/:data', handlePostRequest);
+server.get('/playState', handleGetRequest);
+server.post('/playState/:playState', handlePostRequest);
 server.get('/decibels', handleGetRequest);
 server.post('/decibels/:decibels', handlePostRequest);
-server.get('/patience', handleGetRequest);
-server.post('/patience/:patience', handlePostRequest);
+server.get('/warning', handleGetRequest);
+server.post('/warning/:warning', handlePostRequest);
 server.get('/volume', handleGetRequest);
 server.post('/volume/:volume', handlePostRequest);
 server.get('/track', handleGetRequest);
