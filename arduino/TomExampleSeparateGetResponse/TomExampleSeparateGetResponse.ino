@@ -33,6 +33,10 @@ char pass[] = SECRET_PASS;
 #define BREAKOUT_DCS    7      // VS1053 Data/command select pin (output)
 #define CARDCS 6     // Card chip select pin
 #define DREQ A1       // VS1053 Data request, ideally an Interrupt pin
+#define REQUEST_STRING "\
+playState=myPlayState\
+\
+"
 
 char serverAddress[] = "10.23.11.246";  // server address
 int port = 8080;
@@ -50,6 +54,11 @@ boolean haveStatusCode = false;
 
 // Declare variables to store values from the server
 int myPlayState;
+//int myDecibels;
+//int myWarning;
+//int myVolume;
+//int myTrack;
+//int myDatetime;
 
 //instanciate a musicPlayer object
 Adafruit_VS1053_FilePlayer musicPlayer =
@@ -60,7 +69,7 @@ const int buttonMinePin = 1;      // pin for my play/pause button
 int lastButtonMineState = HIGH;   // previous state of my play/pause button
 
 const int buttonGodPin = 14;      // pin for the 'God' play/pause button
-int lastButtonGodState = HIGH;    // previous state of the 'God' play/pause button
+int lastButtonGodState = 0;       // previous state of the 'God' play/pause button
 
 const char soundFile[] = "track001.MP3";
 
@@ -127,6 +136,15 @@ void setup() {
 
 void loop() {
 
+  // POST stuff
+
+  // assemble the path for the POST message:
+  String postData = String(REQUEST_STRING);
+  String path = "/playState";
+  String contentType = "application/x-www-form-urlencoded";
+
+  // GET stuff
+
   if (millis() - lastRequest > interval) {
     Serial.println("making a request");
     // assemble the path for the GET message:
@@ -166,6 +184,19 @@ void loop() {
       // and what's the type of the value:
       Serial.print("\ttype: ");
       Serial.println(JSON.typeof(value));
+
+      // assign any string values got from the server to
+      // corresponding variables on client as integers
+
+      if (JSON.typeof(myObject["playState"]) == "string") {
+        // convert to int
+        String temp = JSON.stringify(myObject["playState"]);
+        //Serial.println(temp);
+        temp = temp.substring(1, -1);
+        myPlayState = temp.toInt();
+        //Serial.println("it's a string!");
+        Serial.println(myPlayState);
+      }
     }
     haveStatusCode = false;
   }
@@ -215,6 +246,9 @@ void loop() {
       // switch play/pause state:
       if (musicPlayer.paused()) {
         musicPlayer.pausePlaying(false);
+        // send the POST request
+        client.post(path, contentType, postData);
+        Serial.println(postData);
       } else {
         musicPlayer.pausePlaying(true);
       }
@@ -223,14 +257,12 @@ void loop() {
   // save current button state for comparison next time:
   lastButtonMineState = buttonMineState;
 
-
-
   // read a pushbutton for play/pause:
-  int buttonGodState = digitalRead(buttonGodPin);
+  int buttonGodState = myPlayState;
   // if the button has changed:
   if (buttonGodState != lastButtonGodState) {
     // if the button is low:
-    if (buttonGodState == LOW) {
+    if (buttonGodState == 1) {
       // switch play/pause state:
       if (musicPlayer.paused()) {
         musicPlayer.pausePlaying(false);
@@ -241,9 +273,6 @@ void loop() {
   }
   // save current button state for comparison next time:
   lastButtonGodState = buttonGodState;
-
-
-
 }
 
 void printDirectory(File dir, int numTabs) {
