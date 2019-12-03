@@ -93,9 +93,16 @@ function handlePostRequest(request, response) {
   for (property in request.params) {
     // set the killswitch item with the same name as the
     // param that's set in request.params:
-    killswitch[property] = request.params[property];
+    killswitch[property] = parseInt(request.params[property]);
     // save the result so you can reply to the client:
-    result = request.params[property];
+
+    result = parseInt(request.params[property]);
+
+    // if (property != "datetime") {
+    //   result = parseInt(result);
+    // }
+    console.log(result);
+    console.log(typeof(result));
   }
   response.end(result.toString());
 }

@@ -137,8 +137,8 @@ void loop() {
   // POST stuff
 
   // assemble the path for the POST message:
-  String postData = String(REQUEST_STRING);
-  String path = "/playState";
+  String postData = String("");
+  String path = "/playState/0";
   String contentType = "application/x-www-form-urlencoded";
 
   // GET stuff
@@ -183,18 +183,24 @@ void loop() {
       Serial.print("\ttype: ");
       Serial.println(JSON.typeof(value));
 
-      // assign any string values got from the server to
-      // corresponding variables on client as integers
+//      // Tom Igoe's hack to sanitize any string values wrapped in quotes
+//      // got from the server and change them to integers
+//
+//      if (JSON.typeof(myObject["playState"]) == "string") {
+//        // convert to int
+//        String temp = JSON.stringify(myObject["playState"]);
+//        //Serial.println(temp);
+//        temp = temp.substring(1, -1);
+//        myPlayState = temp.toInt();
+//        //Serial.println("it's a string!");
+//        //Serial.println(myPlayState);
+//      }
 
-      if (JSON.typeof(myObject["playState"]) == "string") {
-        // convert to int
-        String temp = JSON.stringify(myObject["playState"]);
-        //Serial.println(temp);
-        temp = temp.substring(1, -1);
-        myPlayState = temp.toInt();
-        //Serial.println("it's a string!");
-        //Serial.println(myPlayState);
-      }
+// TODO: we need to do something like this:
+//Serial.print(myObject["playState"]);
+//myPlayState = myObject["playState"];
+
+
     }
     haveStatusCode = false;
   }
