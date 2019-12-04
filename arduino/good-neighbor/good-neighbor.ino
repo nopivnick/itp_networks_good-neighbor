@@ -3,7 +3,8 @@
 
   - Tom Igoe's HttpClientGetJson.ino example code:
     https://github.com/tigoe/Wifi101_examples/tree/master/HttpClientGetJSON
-
+  - Adafruit VS1053 simple player example sketch
+    https://github.com/adafruit/Adafruit_VS1053_Library/blob/master/examples/player_simple/player_simple.ino
 */
 
 #include <ArduinoHttpClient.h>
@@ -21,22 +22,24 @@ char ssid[] = SECRET_SSID;
 char pass[] = SECRET_PASS;
 
 // pins used on the MKR series for mp3 player features not implemented
-//#define CLK 9       // SPI Clock, shared with SD card
-//#define MISO 10      // Input data, from VS1053/SD card
-//#define MOSI 8      // Output data, to VS1053/SD card
+// #define CLK 9              // SPI Clock, shared with SD card
+// #define MISO 10            // Input data, from VS1053/SD card
+// #define MOSI 8             // Output data, to VS1053/SD card
 
 //breakout
-#define BREAKOUT_RESET  5      // VS1053 reset pin (output)
-#define BREAKOUT_CS     3     // VS1053 chip select pin (output)
-#define BREAKOUT_DCS    7      // VS1053 Data/command select pin (output)
-#define CARDCS 6     // Card chip select pin
-#define DREQ A1       // VS1053 Data request, ideally an Interrupt pin
+#define BREAKOUT_RESET  5  // VS1053 reset pin (output)
+#define BREAKOUT_CS     3  // VS1053 chip select pin (output)
+#define BREAKOUT_DCS    7  // VS1053 Data/command select pin (output)
+#define CARDCS 6           // Card chip select pin
+#define DREQ A1            // VS1053 Data request, ideally an Interrupt pin
 #define REQUEST_STRING "\
 playState=myPlayState\
 \
 "
 
-char serverAddress[] = "10.23.11.246";  // server address
+//const char serverAddress[] = "itp-good-neighbor.glitch.me";  // server address @ glitch
+char serverAddress[] = "10.23.11.246";                         // server address @ localhost on sandbox370
+//const char serverAddress[] = "192.168.1.244";                // server address @ localhost on flame
 int port = 8080;
 
 WiFiClient wifi;
@@ -63,6 +66,7 @@ Adafruit_VS1053_FilePlayer musicPlayer =
   Adafruit_VS1053_FilePlayer(BREAKOUT_RESET, BREAKOUT_CS, BREAKOUT_DCS, DREQ, CARDCS);
 
 // Declare variables for the mp3 musicPlayer
+int loudness;
 const int buttonMinePin = 1;      // pin for my play/pause button
 int lastButtonMineState = HIGH;   // previous state of my play/pause button
 
@@ -112,13 +116,13 @@ void setup() {
 
   if (! musicPlayer.begin()) { // initialise the music player
     Serial.println(F("Couldn't find VS1053, do you have the right pins defined?"));
-    while (1);
+    while (1); // do not proceed if the VS1053 is not found
   }
   Serial.println(F("VS1053 found"));
 
   if (!SD.begin(CARDCS)) {
     Serial.println(F("SD failed, or not present"));
-    while (1);  // don't do anything more
+    while (1);  // do not proceed if the SD card is not found
   }
 
   // call function to read directory contents on the sd card
@@ -126,7 +130,7 @@ void setup() {
 
   // Set volume for left and right channels.
   // 0 = loudest, 100 = silent:
-  musicPlayer.setVolume(10, 10);
+  musicPlayer.setVolume(5, 5);
   musicPlayer.useInterrupt(VS1053_FILEPLAYER_PIN_INT);
   musicPlayer.startPlayingFile("/track001.mp3");
   Serial.println("playing");
@@ -137,19 +141,27 @@ void loop() {
   // POST stuff
 
   // assemble the path for the POST message:
-  String postData = String("");
+  String postPlayState = String("");
   String path = "/playState/0";
   String contentType = "application/x-www-form-urlencoded";
+
+  // assemble the path for the POST message:
+  String postLoudness = String("");
+  String path2 = "/volume/" + String(loudness);
+  String contentType2 = "application/x-www-form-urlencoded";
 
   // GET stuff
 
   if (millis() - lastRequest > interval) {
-    Serial.println("making a request");
+    //    // send the POST request
+    //    client.post(path2, contentType2, postLoudness);
+    //    Serial.println("making a request");
     // assemble the path for the GET message:
     String pathState = "/playState";
     client.get(pathState);
+    //    Serial.println(postLoudness);
+    //    Serial.println(path2);
     lastRequest = millis();
-
     // read the status code and body of the response
     statusCode = client.responseStatusCode();
     haveStatusCode = true;
@@ -183,25 +195,26 @@ void loop() {
       Serial.print("\ttype: ");
       Serial.println(JSON.typeof(value));
 
-//      // Tom Igoe's hack to sanitize any string values wrapped in quotes
-//      // got from the server and change them to integers
-//
-//      if (JSON.typeof(myObject["playState"]) == "string") {
-//        // convert to int
-//        String temp = JSON.stringify(myObject["playState"]);
-//        //Serial.println(temp);
-//        temp = temp.substring(1, -1);
-//        myPlayState = temp.toInt();
-//        //Serial.println("it's a string!");
-//        //Serial.println(myPlayState);
-//      }
-
-// TODO: we need to do something like this:
-//Serial.print(myObject["playState"]);
-//myPlayState = myObject["playState"];
-
-
+      //      // Tom Igoe's hack to sanitize any string values wrapped in quotes
+      //      // got from the server and change them to integers
+      //
+      //      if (JSON.typeof(myObject["playState"]) == "string") {
+      //        // convert to int
+      //        String temp = JSON.stringify(myObject["playState"]);
+      //        //Serial.println(temp);
+      //        temp = temp.substring(1, -1);
+      //        myPlayState = temp.toInt();
+      //        //Serial.println("it's a string!");
+      //        //Serial.println(myPlayState);
+      //      }
     }
+
+    //TODO: we need to do something like this:
+    Serial.print("playState = \t");
+    Serial.println(myObject["playState"]);
+    myPlayState = myObject["playState"];
+    Serial.print("myPlayState = \t");
+    Serial.println(myPlayState);
     haveStatusCode = false;
   }
 
@@ -211,7 +224,7 @@ void loop() {
 
   // read a potentiometer (0-1023 readings) and
   // map to a range from 100 to 0:
-  int loudness = map(analogRead(A0), 0, 1023, 100, 0);
+  loudness = map(analogRead(A0), 0, 1023, 100, 0);
   // set the volume:
   musicPlayer.setVolume(loudness, loudness);
 
@@ -251,8 +264,8 @@ void loop() {
       if (musicPlayer.paused()) {
         musicPlayer.pausePlaying(false);
         // send the POST request
-        client.post(path, contentType, postData);
-        Serial.println(postData);
+        client.post(path, contentType, postPlayState);
+        Serial.println(postPlayState);
       } else {
         musicPlayer.pausePlaying(true);
       }
