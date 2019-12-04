@@ -25,7 +25,9 @@
 let express = require('express'); // include the express library
 let server = express(); // create a server using express
 let bodyParser = require('body-parser'); // include body-parser
+let logger = require('morgan');
 server.use('/', express.static('public')); // serve static files from /public
+server.use(logger("common"));
 
 // get the time:
 let now = new Date();
